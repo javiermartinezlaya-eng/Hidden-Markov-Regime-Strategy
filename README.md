@@ -9,7 +9,9 @@ This project implements a full research pipeline including:
 - Deflated Sharpe Ratio (DSR) to account for data-snooping
 - Volatility-matched benchmarking against Buy & Hold
 
-<img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/d4950d4f-5284-4da4-ab4b-56c64b7c9c0c" />
+
+<img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/d4950d4f-5284-4da4-ab4b-56c64b7c9c0c" 
+  
 
 The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
 
