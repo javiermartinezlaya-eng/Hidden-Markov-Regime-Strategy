@@ -48,7 +48,7 @@ The strategy prioritizes:
 
 ### 4. Portfolio Output
 
-- Continuous exposure between 0 and 1
+- Continuous exposure between 0 and 1.2
 - Daily strategy returns
 - Equity curve and drawdown tracking
 
