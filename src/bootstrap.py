@@ -65,26 +65,25 @@ def cagr_from_equity(equity: np.ndarray, periods_per_year: int = 252) -> float:
 # =========================
 # I/O
 # =========================
-def read_returns(path: str, ret_col: str, sheet_name=None) -> pd.Series:
-    ext = os.path.splitext(path.lower())[1]
-    if ext in [".xlsx", ".xls"]:
-        df = pd.read_excel(path, sheet_name=sheet_name)
-    elif ext in [".csv"]:
-        df = pd.read_csv(path)
+def read_returns(path, ret_col, sheet_name=None):
+    """
+    Lee retornos desde un Excel.
+    - Si sheet_name=None: toma la primera hoja.
+    - Si sheet_name es str/int: usa esa hoja.
+    """
+    x = pd.read_excel(path, sheet_name=sheet_name)
+
+    # Si hay múltiples hojas, pandas devuelve un dict
+    if isinstance(x, dict):
+        df = next(iter(x.values()))
     else:
-        raise ValueError("Formato no soportado. Usa .xlsx/.xls o .csv")
+        df = x
 
     if ret_col not in df.columns:
-        raise KeyError(
-            f"No encuentro la columna '{ret_col}'. Columnas disponibles:\n{list(df.columns)}"
-        )
+        raise ValueError(f"Columna '{ret_col}' no encontrada. Columnas disponibles: {df.columns}")
 
-    s = pd.to_numeric(df[ret_col], errors="coerce").dropna()
-    s = s[np.isfinite(s)]
-
-    if len(s) < 300:
-        print(f"⚠️ Aviso: solo hay {len(s)} retornos válidos; conclusiones menos robustas.")
-    return s
+    r = pd.to_numeric(df[ret_col], errors="coerce").dropna().values
+    return r
 
 
 # =========================
@@ -186,7 +185,8 @@ def bootstrap_summary(stats: pd.DataFrame, obs: dict) -> dict:
 # =========================
 def main():
     s = read_returns(INPUT_PATH, RET_COL, sheet_name=SHEET_NAME)
-    r_obs = s.values.astype(float)
+    r_obs = s.astype(float)
+
 
     obs = observed_metrics(r_obs, PERIODS_PER_YEAR)
 
