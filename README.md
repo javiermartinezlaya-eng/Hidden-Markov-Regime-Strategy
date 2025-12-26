@@ -10,7 +10,18 @@ This project implements a full research pipeline including:
 - Volatility-matched benchmarking against Buy & Hold
 
 
-<img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/dcaba63c-60de-49eb-a48c-a665a3f2f8af" />
+### Signal vs Forward Returns
+![Sigmoid Scatter](reports/figures/sigmoid_nextday_scatter.png)
+
+### Forward Return by Signal Bucket
+![Sigmoid Bins](reports/figures/sigmoid_nextday_bins_nextday.png)
+
+### Capturable Forward Returns
+![Capturable Returns](reports/figures/sigmoid_nextday_bins_capturable.png)
+
+### Lag Sensitivity Analysis
+![Lag Sweep](reports/figures/lag_sweep.png)
+
   
 
 The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
