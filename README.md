@@ -52,9 +52,12 @@ The strategy prioritizes:
 
 ### 2. Signal Construction
 
-- For each regime, estimate expected Sharpe ratio
-- Smooth expected Sharpe through time
-- Map expected Sharpe to position size using a sigmoid function
+- For each regime, estimate expected return and volatility
+- Compute an ex-ante expected Sharpe ratio using predictive regime probabilities
+- Apply exponential smoothing to reduce estimation noise
+- Shift the signal to ensure strictly forward-looking (ex-ante) usage
+- Map expected Sharpe to position size via a sigmoid function
+
 
 ### 3. Risk Filters
 
@@ -97,6 +100,27 @@ This project explicitly avoids in-sample-only evaluation.
 - Provides a true statistical confidence level
 
 ---
+Predictive Diagnostics
+The project includes explicit diagnostics to evaluate whether the regime-based signal contains forward-looking information.
+
+These diagnostics are not used for optimization, but for validation and interpretability.
+
+Lag Analysis
+Correlation between the ex-ante expected Sharpe signal and future returns is evaluated across multiple lags.
+This helps identify the time horizon where regime information is most informative.
+
+Signal Bucketing
+Forward returns are analyzed conditional on signal strength:
+- Weak signal regimes
+- Neutral regimes
+- Strong signal regimes
+
+Both raw forward returns and capturable returns (position × forward return) are evaluated.
+
+All diagnostics are generated automatically and saved to:
+reports/figures/
+
+---
 
 ## Results Summary
 
@@ -132,21 +156,30 @@ reports/figures/
 ## Project Structure
 
 src/
-    hmm_strategy.py
-    bootstrap.py
-    deflated_sharpe.py
-    export_figures.py
+├── hmm_strategy.py        # Main HMM regime strategy (ex-ante, walk-forward)
+├── bootstrap.py           # Block bootstrap Monte Carlo inference
+├── deflated_sharpe.py     # Deflated Sharpe Ratio computation
+├── export_figures.py      # Equity, drawdown, benchmark plots
+└── analysis/
+    ├── signal_diagnostics.py  # Lag analysis, sigmoid diagnostics
+    └── __init__.py
+reports/
+└── figures/               # Automatically generated figures
+
 
 ---
 
 ## How to Run
 
+Requirements: Python 3.10+, numpy, pandas, scipy, matplotlib, yfinance
+Run the full research pipeline:
+
+```bash
 python src/hmm_strategy.py
 python src/bootstrap.py
 python src/deflated_sharpe.py
 python src/export_figures.py
-
----
+```
 
 Disclaimer
 
