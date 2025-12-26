@@ -156,34 +156,30 @@ reports/figures/
 ## Project Structure
 
 src/
-├── hmm_strategy.py        # Main HMM regime strategy (ex-ante, walk-forward)
-├── bootstrap.py           # Block bootstrap Monte Carlo inference
-├── deflated_sharpe.py     # Deflated Sharpe Ratio computation
-├── export_figures.py      # Equity, drawdown, benchmark plots
-└── analysis/
-    ├── signal_diagnostics.py  # Lag analysis, sigmoid diagnostics
-    └── __init__.py
-reports/
-└── figures/               # Automatically generated figures
+    hmm_strategy.py
+    bootstrap.py
+    deflated_sharpe.py
+    export_figures.py
 
+reports/
+    figures/
+        equity_raw.png
+        equity_vol_matched.png
+        drawdown.png
 
 ---
 
 ## How to Run
 
-Requirements: Python 3.10+, numpy, pandas, scipy, matplotlib, yfinance
-Run the full research pipeline:
-
-```bash
 python src/hmm_strategy.py
 python src/bootstrap.py
 python src/deflated_sharpe.py
 python src/export_figures.py
-```
 
-Disclaimer
+---
 
-This project is for research and educational purposes only.
+## Disclaimer
+
+This project is for research and educational purposes only.  
 It does not constitute financial advice.
-
 
