@@ -3,13 +3,12 @@ import pandas as pd
 import yfinance as yf
 import datetime
 import matplotlib.pyplot as plt
-
-# Intentamos usar scipy para Spearman; si no está, seguimos sólo con Pearson (np.corrcoef)
-try:
-    from scipy.stats import spearmanr, pearsonr
-    SCIPY_AVAILABLE = True
-except ImportError:
-    SCIPY_AVAILABLE = False
+import os
+from src.analysis.signal_diagnostics import (
+    analizar_lag_exp_sharpe,
+    plot_sigmoid_and_nextday,
+    plot_return_hist_with_signal_means,
+)
 
 # ============================================================
 # 1. Parámetros
@@ -502,8 +501,7 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
 
     # Sharpe esperado "usable" (forward): sólo suavizado (no shift)
     exp_sharpe_smooth = exp_sharpe_daily.ewm(span=5, adjust=False).mean()
-    exp_sharpe_shifted = exp_sharpe_smooth  # mantenemos el nombre para el resto del código
-
+    exp_sharpe_shifted = exp_sharpe_smooth.shift(1)
     # Sigmoide con escala EXP_SHARPE_SCALE
     k = 5.0
     x0 = EXP_SHARPE_CUTOFF
@@ -556,7 +554,7 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
     # RETORNO FUTURO del activo (no la estrategia):
     # forward_return_{t->t+h} = alpha + beta * exp_sharpe_shifted_t
     # ------------------------------------------------------------
-    h = max(2, int(fwd_horizon_days))
+    h = max(1, int(fwd_horizon_days))
     serie_x = df_resultados["exp_sharpe_shifted"]
 
     if use_cumulative_forward_return:
@@ -593,75 +591,6 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
 
     return df_resultados, metricas, corr_exp_sharp_shifted_returns, alpha, beta, r2
 
-
-
-# ============================================================
-# 6. Análisis de lag de exp_sharpe_shifted vs strat_returns
-# ============================================================
-def analizar_lag_exp_sharpe(df_resultados, max_lag=20):
-    """
-    Hace un barrido de lags de exp_sharpe_shifted frente a strat_returns
-    y genera una tabla y una gráfica con las correlaciones (Pearson y, si hay scipy, Spearman).
-    """
-    exp_sharpe = df_resultados["exp_sharpe_shifted"]
-    strat_returns = df_resultados["strat_returns"]
-
-    lags = range(-max_lag, max_lag + 1)
-    rows = []
-
-    for lag in lags:
-        shifted = exp_sharpe.shift(lag)
-        mask = shifted.notna() & strat_returns.notna()
-
-        if mask.sum() < 10:
-            pear = np.nan
-            spear = np.nan
-        else:
-            x = shifted[mask].values
-            y = strat_returns[mask].values
-            if SCIPY_AVAILABLE:
-                pear = pearsonr(x, y)[0]
-                spear = spearmanr(x, y)[0]
-            else:
-                pear = np.corrcoef(x, y)[0, 1]
-                spear = np.nan
-
-        rows.append((lag, pear, spear))
-
-    df_lags = pd.DataFrame(rows, columns=["lag", "pearson", "spearman"])
-
-    print("\n=== Análisis de lag entre exp_sharpe_shifted y strat_returns ===")
-    print(df_lags)
-
-    # Gráfica
-    plt.figure(figsize=(10, 5))
-    plt.plot(df_lags["lag"], df_lags["pearson"], marker="o", label="Pearson")
-    if not df_lags["spearman"].isna().all():
-        plt.plot(df_lags["lag"], df_lags["spearman"], marker="x", linestyle="--", label="Spearman")
-    plt.axhline(0.0, linestyle="--", linewidth=1)
-    plt.axvline(0.0, linestyle="--", linewidth=1)
-    plt.xlabel("Lag (días, exp_sharpe_shifted desplazada)")
-    plt.ylabel("Correlación")
-    plt.title("Lag sweep: exp_sharpe_shifted vs strat_returns")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-    # Mejores lags
-    if df_lags["pearson"].abs().max() > 0:
-        best_pear = df_lags.iloc[df_lags["pearson"].abs().idxmax()]
-        print("\nMejor lag por |Pearson|:")
-        print(best_pear)
-
-    if not df_lags["spearman"].isna().all() and df_lags["spearman"].abs().max() > 0:
-        best_spear = df_lags.iloc[df_lags["spearman"].abs().idxmax()]
-        print("\nMejor lag por |Spearman|:")
-        print(best_spear)
-
-    return df_lags
-
-
 # ============================================================
 # 8. Main (sólo HMM, sin ML encima)
 # ============================================================
@@ -669,65 +598,104 @@ def main():
     print(f"Descargando {TICKER}...")
     prices = descargar_precios(TICKER, START_DATE, END_DATE)
 
-    # Retornos para el HMM multivariante
+    # =========================================================
+    # 1) Observaciones para HMM multivariante
+    # =========================================================
     r = prices["Close"].pct_change().dropna()
-    obs = pd.DataFrame({
-        "r": r,
-        "v": r.abs()
-    }, index=r.index)
+    obs = pd.DataFrame(
+        {"r": r, "v": r.abs()},
+        index=r.index
+    )
 
     print("\nConstruyendo HMM walk-forward multivariante (sin look-ahead de parámetros)…")
     posterior_filt, posterior_smooth, medias_df, sigmas_df, pred_weights = construir_hmm_walkforward(
-        obs, n_states=N_ESTADOS, max_iter=MAX_ITER, random_state=42
+        obs,
+        n_states=N_ESTADOS,
+        max_iter=MAX_ITER,
+        random_state=42
     )
 
     # Subserie de precios desde la primera fecha con posterior
     first_idx = posterior_filt.index.min()
     prices_sub = prices.loc[first_idx:]
 
+    # =========================================================
+    # 2) Estrategia: HMM_expSharpe + trend + vol targeting
+    # =========================================================
     print("\nAplicando estrategia HMM_expSharpe + trend + vol targeting (walk-forward multivariante)…")
     df_resultados, metricas, corr_exp_sharp_shifted_returns, alpha, beta, r2 = \
         estrategia_hmm_prob_regime_trend(
-            prices_sub, posterior_filt, medias_df, sigmas_df, pred_weights, freq_anual=FREQ_ANUAL
+            prices_sub,
+            posterior_filt,
+            medias_df,
+            sigmas_df,
+            pred_weights,
+            freq_anual=FREQ_ANUAL
         )
 
-    print(f"\n=== Métricas Estrategia base HMM_expSharpe+Trend+VolTarget sobre {TICKER} (walk-forward multivariante) ===")
+    print(f"\n=== Métricas Estrategia base HMM_expSharpe+Trend+VolTarget sobre {TICKER} ===")
     for k, v in metricas.items():
         try:
             print(f"{k}: {float(v):.4f}")
         except Exception:
             print(f"{k}: {v}")
 
-    # --------------------------------------------------------
-    # RESULTADOS CORRELACIÓN Y REGRESIÓN
-    # --------------------------------------------------------
-    print("\n=== Correlación entre exp_sharpe_shifted (forward) y strat_returns ===")
+    # =========================================================
+    # 3) Correlación y regresión (diagnóstico numérico)
+    # =========================================================
+    print("\n=== Correlación entre exp_sharpe_shifted y forward_return del activo ===")
     try:
         print(f"Coeficiente de correlación de Pearson: {float(corr_exp_sharp_shifted_returns):.4f}")
     except Exception:
         print(f"Coeficiente de correlación de Pearson: {corr_exp_sharp_shifted_returns}")
 
-    print("\n=== Regresión lineal simple: strat_returns_t = alpha + beta * exp_sharpe_shifted_t ===")
+    print("\n=== Regresión lineal: forward_return = alpha + beta * exp_sharpe_shifted ===")
     print(f"alpha (intercepto): {alpha:.8f}")
     print(f"beta  (pendiente) : {beta:.8f}")
     print(f"R^2               : {r2:.4f}")
 
-    # --------------------------------------------------------
-    # ANÁLISIS DE LAG DE exp_sharpe_shifted
-    # --------------------------------------------------------
-    df_lags = analizar_lag_exp_sharpe(df_resultados, max_lag=20)
+    # =========================================================
+    # 4) Diagnósticos de señal (exporta PNGs)
+    # =========================================================
+    FIG_DIR = "reports/figures"
+    os.makedirs(FIG_DIR, exist_ok=True)
 
-    # Rentabilidad anual de la estrategia base
-    annual_base = df_resultados["strat_returns"].groupby(df_resultados.index.year) \
+    # 4.1 Lag sweep (se usa también para Excel)
+    df_lags = analizar_lag_exp_sharpe(
+        df_resultados,
+        max_lag=20,
+        save_path=os.path.join(FIG_DIR, "lag_sweep.png"),
+    )
+
+    # 4.2 Sigmoide vs retorno siguiente (3 figuras)
+    plot_sigmoid_and_nextday(
+        df_resultados,
+        cutoff=EXP_SHARPE_CUTOFF,
+        save_path_prefix=os.path.join(FIG_DIR, "sigmoid_nextday"),
+    )
+
+    # 4.3 Histograma retornos + medias de señal
+    plot_return_hist_with_signal_means(
+        df_resultados,
+        bin_width=0.0025,
+        r_min=-0.10,
+        r_max=0.10,
+        save_path=os.path.join(FIG_DIR, "return_hist_signal_means.png"),
+    )
+
+    # =========================================================
+    # 5) Métricas anuales, equity y heatmap mensual
+    # =========================================================
+    annual_base = (
+        df_resultados["strat_returns"]
+        .groupby(df_resultados.index.year)
         .apply(lambda x: (1 + x).prod() - 1)
-    df_annual = pd.DataFrame({
-        "annual_base": annual_base,
-    })
+    )
+    df_annual = pd.DataFrame({"annual_base": annual_base})
 
     print("\n=== Rentabilidad anual (base) ===")
     print(df_annual)
 
-    # Equity comparativa (buy&hold vs base)
     bh_returns = df_resultados["precio"].pct_change().fillna(0)
     bh_equity = (1 + bh_returns).cumprod()
 
@@ -737,16 +705,25 @@ def main():
         "equity_base": df_resultados["equity"],
     })
 
-    # Heatmap mensual de la estrategia base
     df_heat = df_resultados.copy()
     df_heat["year"] = df_heat.index.year
     df_heat["month"] = df_heat.index.month
 
-    heatmap_base = df_heat.groupby(["year", "month"])["strat_returns"] \
-        .apply(lambda x: (1 + x).prod() - 1).unstack()
+    heatmap_base = (
+        df_heat
+        .groupby(["year", "month"])["strat_returns"]
+        .apply(lambda x: (1 + x).prod() - 1)
+        .unstack()
+    )
 
-    # Exportar a Excel (sólo base)
-    file_name = f"hmm_{TICKER}_{N_ESTADOS}estados_expSharpe_trend_voltarget_walkforward_multivar_BASE.xlsx"
+    # =========================================================
+    # 6) Exportar a Excel (base)
+    # =========================================================
+    file_name = (
+        f"hmm_{TICKER}_{N_ESTADOS}estados_"
+        f"expSharpe_trend_voltarget_walkforward_multivar_BASE.xlsx"
+    )
+
     with pd.ExcelWriter(file_name) as writer:
         df_resultados.to_excel(writer, sheet_name="Resultados_diarios_base")
         df_annual.to_excel(writer, sheet_name="Rentabilidad_anual_base")
@@ -759,7 +736,7 @@ def main():
     print(f"\nExcel guardado como: {file_name}")
 
     # =========================================================
-    # SEÑAL SUGERIDA POR EL MODELO (EXPLICADA)
+    # 7) Señal sugerida (explicada)
     # =========================================================
     last_dt = df_resultados.index[-1]
     row = df_resultados.iloc[-1]
@@ -781,5 +758,6 @@ def main():
 
     print("\n=== RESULTADO FINAL ===")
     print(f"Posición sugerida por el modelo: {row['position']:.4f}")
+
 if __name__ == "__main__":
     main()
