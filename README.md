@@ -9,6 +9,7 @@ This project implements a full research pipeline including:
 - Deflated Sharpe Ratio (DSR) to account for data-snooping
 - Volatility-matched benchmarking against Buy & Hold
 
+The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
 
 ### Signal vs Forward Returns
 ![Sigmoid Scatter](reports/figures/sigmoid_nextday_scatter.png)
@@ -24,7 +25,6 @@ This project implements a full research pipeline including:
 
   
 
-The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
 
 ---
 
