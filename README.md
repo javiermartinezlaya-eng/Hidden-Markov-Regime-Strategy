@@ -27,11 +27,10 @@ The objective is not to maximize raw returns, but to construct a **statistically
 
 ---
 
-## Overview
+## Methodology
 
 Financial markets exhibit regime-dependent behavior, where risk and return characteristics change over time.  
-This project builds a **regime-aware trading strategy on QQQ** using a multivariate Hidden Markov Model to infer latent market states and dynamically adjust exposure.
-
+This project builds a regime-aware trading strategy on QQQ using a multivariate Hidden Markov Model to infer latent market states and dynamically adjust exposure.
 The strategy prioritizes:
 
 - Stability over aggressiveness
@@ -40,28 +39,29 @@ The strategy prioritizes:
 
 ---
 
-## Strategy Logic
+## Signal Construction
 
-### 1. Regime Detection
+### Regime Detection
+- Multivariate Gaussian HMM  
+- Trained using an expanding walk-forward window  
+- No parameter look-ahead or leakage  
+- Latent regimes inferred daily  
 
-- Multivariate Gaussian HMM
-- Trained using an **expanding walk-forward window**
-- No parameter look-ahead or leakage
-- Latent regimes inferred daily
+### Signal Definition
+- For each regime, estimate expected return and volatility  
+- Compute an ex-ante expected Sharpe ratio using predictive regime probabilities  
+- Apply exponential smoothing to reduce estimation noise  
+- Shift the signal to ensure strictly forward-looking (ex-ante) usage  
+- Map expected Sharpe to position size via a sigmoid function  
 
-### 2. Signal Construction
+---
 
-- For each regime, estimate expected return and volatility
-- Compute an ex-ante expected Sharpe ratio using predictive regime probabilities
-- Apply exponential smoothing to reduce estimation noise
-- Shift the signal to ensure strictly forward-looking (ex-ante) usage
-- Map expected Sharpe to position size via a sigmoid function
+## Risk Management
 
+- Trend filter: EMA fast vs EMA slow  
+- Volatility targeting: normalize risk across regimes and time  
 
-### 3. Risk Filters
-
-- **Trend filter**: EMA fast vs EMA slow
-- **Volatility targeting**: normalize risk across regimes and time
+---
 
 ### 4. Portfolio Output
 
@@ -75,28 +75,33 @@ The strategy prioritizes:
 
 This project explicitly avoids in-sample-only evaluation.
 
-### Walk-Forward Backtest
+## Results Summary
 
-- Model retrained yearly using only past data
-- Strategy applied strictly out-of-sample
-- Ensures realistic deployment conditions
+- Raw returns do not outperform Buy & Hold, as expected due to reduced market exposure  
+- At matched volatility, the strategy achieves comparable performance to Buy & Hold  
+- Maximum drawdowns are significantly reduced, particularly during crisis periods (2020, 2022)  
+
+---
+
+## Validation
+
+### Walk-Forward Backtest
+- Model retrained yearly using only past data  
+- Strategy applied strictly out-of-sample  
 
 ### Block Bootstrap Monte Carlo
-
-- Stationary block bootstrap to preserve serial dependence
-- Thousands of resampled equity paths
-- Empirical distributions of:
-  - Sharpe ratio
-  - CAGR
-  - Volatility
-  - Maximum drawdown
+- Stationary block bootstrap to preserve serial dependence  
+- Empirical distributions of Sharpe, CAGR, volatility and maximum drawdown  
 
 ### Deflated Sharpe Ratio (DSR)
+- Adjusts Sharpe significance for non-normal returns and multiple trials  
 
-- Adjusts Sharpe significance for:
-  - Non-normal returns (skewness, kurtosis)
-  - Multiple strategy trials / data-snooping
-- Provides a true statistical confidence level
+---
+## Limitations
+
+- Daily close-to-close execution only  
+- Transaction costs and slippage not explicitly modeled  
+- Regime stability may degrade during structural breaks  
 
 ---
 Predictive Diagnostics
