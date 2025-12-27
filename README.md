@@ -12,16 +12,24 @@ This project implements a full research pipeline including:
 The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
 
 ### Signal vs Forward Returns
-
+<p align="center">
+  <img src="reports/figures/signal_vs_forward_returns.png" width="850">
+</p>
 
 ### Forward Return by Signal Bucket
-
+<p align="center">
+  <img src="reports/figures/forward_return_by_signal_bucket.png" width="850">
+</p>
 
 ### Capturable Forward Returns
-
+<p align="center">
+  <img src="reports/figures/capturable_forward_returns.png" width="850">
+</p>
 
 ### Lag Sensitivity Analysis
-
+<p align="center">
+  <img src="reports/figures/lag_sweep.png" width="850">
+</p>
 
   
 
