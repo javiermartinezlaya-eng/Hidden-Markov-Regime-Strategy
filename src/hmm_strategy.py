@@ -3,6 +3,7 @@ import pandas as pd
 import yfinance as yf
 import datetime
 import matplotlib.pyplot as plt
+import os
 # ============================================================
 # 1. Parámetros
 # ============================================================
@@ -867,7 +868,11 @@ def main():
     heatmap_base = df_heat.groupby(["year", "month"])["strat_returns"].apply(lambda x: (1 + x).prod() - 1).unstack()
 
     # Exportar a Excel
+    os.makedirs("outputs", exist_ok=True)
+
     file_name = f"hmm_{TICKER}_{N_ESTADOS}estados_expSharpe_trend_voltarget_walkforward_multivar_BASE.xlsx"
+    file_path = os.path.join("outputs", file_name)
+
     with pd.ExcelWriter(file_name) as writer:
         df_resultados.to_excel(writer, sheet_name="Resultados_diarios_base")
         df_annual.to_excel(writer, sheet_name="Rentabilidad_anual_base")
