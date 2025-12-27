@@ -63,7 +63,7 @@ The strategy prioritizes:
 
 ---
 
-### 4. Portfolio Output
+### Portfolio Output
 
 - Continuous exposure between 0 and 1.35
 - Daily strategy returns
@@ -104,7 +104,7 @@ This project explicitly avoids in-sample-only evaluation.
 - Regime stability may degrade during structural breaks  
 
 ---
-Predictive Diagnostics
+##Predictive Diagnostics
 The project includes explicit diagnostics to evaluate whether the regime-based signal contains forward-looking information.
 
 These diagnostics are not used for optimization, but for validation and interpretability.
