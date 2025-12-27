@@ -539,8 +539,6 @@ def analizar_lag_exp_sharpe(df_resultados, max_lag=10):
 
     df_lags = pd.DataFrame(rows, columns=["lag", "pearson"])
 
-    print("\n=== Lagged correlation analysis: exp_sharpe_shifted vs. strat_returns (Pearson) ===")
-    print(df_lags)
 
     plt.figure(figsize=(10, 5))
     plt.plot(df_lags["lag"], df_lags["pearson"], marker="o", label="Pearson")
