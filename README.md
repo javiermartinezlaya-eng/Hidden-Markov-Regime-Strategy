@@ -18,10 +18,10 @@ The objective is not to maximize raw returns, but to construct a **statistically
 ![Volatility-matched equity curve](reports/figures/01_equity_vol_matched.png)
 
 ### Capturable Forward Returns
-![Signal vs Forward Returns](reports/figures/05_signal_expected_sharpe_vs_nextday_return.png)
+![Capturable Forward Returns](reports/figures/06_capturable_return_by_signal_bins.png)
 
 ### Lag Sensitivity Analysis
-![Forward Return by Signal Bucket](reports/figures/07_nextday_return_by_signal_bins_with_sigmoid.png)
+![Lag Sensitivity Analysis](reports/figures/04_lag_sweep.png)
   
 
 
