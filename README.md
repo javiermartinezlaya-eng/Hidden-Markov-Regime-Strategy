@@ -11,11 +11,11 @@ This project implements a full research pipeline including:
 
 The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
 
-### Signal vs Forward Returns
-![Volatility-matched equity curve](reports/figures/01_equity_vol_matched.png)
-
 ### Forward Return by Signal Bucket
 ![Drawdown](reports/figures/02_drawdown.png)
+
+### Signal vs Forward Returns
+![Volatility-matched equity curve](reports/figures/01_equity_vol_matched.png)
 
 ### Capturable Forward Returns
 ![Signal vs Forward Returns](reports/figures/05_signal_expected_sharpe_vs_nextday_return.png)
