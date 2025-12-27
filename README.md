@@ -11,7 +11,7 @@ This project implements a full research pipeline including:
 
 The objective is not to maximize raw returns, but to construct a **statistically defensible strategy with controlled downside risk**.
 
-### Forward Return by Signal Bucket
+### Drawdown
 ![Drawdown](reports/figures/02_drawdown.png)
 
 ### Signal vs Forward Returns
