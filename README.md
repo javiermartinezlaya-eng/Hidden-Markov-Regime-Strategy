@@ -140,17 +140,6 @@ The primary value of the strategy lies in **drawdown mitigation and risk control
 
 ## Visual Analysis
 
-The following figures are generated automatically:
-
-- **Equity curve (raw)**  
-  Absolute performance compared to Buy & Hold.
-
-- **Equity curve (volatility-matched)**  
-  Buy & Hold scaled to the same volatility as the strategy for fair comparison.
-
-- **Drawdown comparison**  
-  Downside risk, depth, and recovery speed across market regimes.
-
 All figures are saved under:
 
 reports/figures/
