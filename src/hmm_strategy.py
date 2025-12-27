@@ -3,18 +3,15 @@ import pandas as pd
 import yfinance as yf
 import datetime
 import matplotlib.pyplot as plt
-
 # ============================================================
 # 1. Parámetros
 # ============================================================
 TICKER = "QQQ"
 START_DATE = "2010-01-01"
 END_DATE = datetime.date.today().strftime("%Y-%m-%d")
-
 N_ESTADOS = 3
 MAX_ITER = 50
 FREQ_ANUAL = 252  
-
 EMA_FAST = 20
 EMA_SLOW = 120
 
@@ -30,7 +27,6 @@ MAX_LEVERAGE = 1.35
 # Filtro de tendencia: peso mínimo/máximo
 TREND_MIN_WEIGHT = 0.0      
 TREND_MAX_WEIGHT = 1.0      
-
 
 # ============================================================
 # 2. Descargar precios
@@ -55,7 +51,6 @@ def descargar_precios(ticker, start, end):
         close = close[["Close"]]
 
     return close
-
 
 # ============================================================
 # 3. HMM gaussiano multivariante con Baum–Welch (entrenamiento)
@@ -230,7 +225,6 @@ def entrenar_hmm_probabilistico(observaciones, n_states=N_ESTADOS, max_iter=50,
 
     return posterior_filt_df, posterior_smooth_df, medias_full, covs, A, pi
 
-
 # ============================================================
 # 3bis. Filtrado + suavizado con parámetros fijos (test)
 # ============================================================
@@ -303,7 +297,6 @@ def filtrar_y_suavizar_hmm_dado_parametros(observaciones, medias_full, covs, A, 
     )
 
     return posterior_filt_df, posterior_smooth_df
-
 
 # ============================================================
 # 3ter. Construir HMM walk-forward (sin look-ahead de parámetros)
@@ -387,7 +380,6 @@ def construir_hmm_walkforward(observaciones, n_states=N_ESTADOS,
 
     return posterior_filt_all, posterior_smooth_all, medias_df_all, sigmas_df_all, pred_weights_all
 
-
 # ============================================================
 # 4. Métricas
 # ============================================================
@@ -412,7 +404,6 @@ def calcular_metricas(returns, freq_anual=252):
         "max_drawdown": max_dd
     }
     return metricas, equity, drawdown
-
 
 # ============================================================
 # 5. Estrategia HMM -> Sharpe esperado + tendencia + vol targeting
@@ -523,7 +514,6 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
 
     return df_resultados, metricas, corr_exp_sharp_shifted_returns, alpha, beta, r2
 
-
 # ============================================================
 # 6. Análisis de lag (solo Pearson)
 # ============================================================
@@ -571,11 +561,8 @@ def analizar_lag_exp_sharpe(df_resultados, max_lag=10):
 
     return df_lags
 
-
 # ============================================================
-# 7. Visualización: sigmoide vs retorno día siguiente (y capturable)
-#    CORREGIDO: bins por rangos fijos (winsorizados) + barras limpias
-#    Motivo: qcut (cuantiles) con señal muy concentrada produce bins “microscópicos”
+# 7. Visualización de gráficas.
 # ============================================================
 def plot_sigmoid_and_nextday(df_resultados, max_scatter_points=6000, n_bins=12,
                              clip_q=(0.01, 0.99), add_counts=True):
@@ -593,7 +580,6 @@ def plot_sigmoid_and_nextday(df_resultados, max_scatter_points=6000, n_bins=12,
     if len(d) < 100:
         print("Muy pocos datos para graficar.")
         return
-
     # --------------------------------------------------------
     # 1) Scatter (downsample)
     # --------------------------------------------------------
@@ -612,10 +598,9 @@ def plot_sigmoid_and_nextday(df_resultados, max_scatter_points=6000, n_bins=12,
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
-
     # --------------------------------------------------------
     # 2) Bins CORREGIDOS: rangos fijos sobre señal winsorizada
-    #    - clip_q limita colas para que no “revienten” el eje X
+    #    - clip_q limita colas para que no colapsen el eje X
     #    - bins uniformes en el rango central -> barras interpretables
     # --------------------------------------------------------
     ql, qh = clip_q
@@ -675,12 +660,10 @@ def plot_sigmoid_and_nextday(df_resultados, max_scatter_points=6000, n_bins=12,
 
     plt.tight_layout()
     plt.show()
-
     # --------------------------------------------------------
     # 3) Bins: retorno "capturable" = position[t] * returns[t+1]
     # --------------------------------------------------------
     d2["capturable_next"] = d2["pos"] * d2["y_next"]
-
     mean_capturable = g["capturable_next"].mean()
     base_mid2 = g["base_pos"].median()
     counts2 = g.size()
@@ -709,10 +692,8 @@ def plot_sigmoid_and_nextday(df_resultados, max_scatter_points=6000, n_bins=12,
     ax2 = ax1.twinx()
     ax2.plot(centers, base_mid2.values, marker="o", linestyle="--")
     ax2.set_ylabel("Base position (sigmoid)")
-
     plt.tight_layout()
     plt.show()
-
 # ============================================================
 # X. Histograma de retornos diarios + media de señal (HMM) y sigmoide por bin
 # ============================================================
@@ -735,7 +716,7 @@ def plot_return_hist_with_signal_means(
     mean_exp_global = d["exp"].mean()
     mean_base_global = d["base"].mean()
 
-    # Opcional: recortar outliers
+    # Recortar outliers
     if clip_outliers:
         d["ret"] = d["ret"].clip(lower=r_min, upper=r_max)
 
@@ -756,16 +737,13 @@ def plot_return_hist_with_signal_means(
     )
 
     stats = stats[stats["n"] > 0].copy()
-
     # Centros de bin
     bin_lefts = np.array([iv.left for iv in stats["bin"]])
     bin_centers = bin_lefts + bin_width / 2.0
-
     # =======================
     # Gráfico
     # =======================
     fig, ax1 = plt.subplots(figsize=(11, 5))
-
     # Histograma (recuento)
     ax1.bar(
         bin_centers,
@@ -780,10 +758,8 @@ def plot_return_hist_with_signal_means(
     ax1.set_title(
         f"Daily returns histogram (bin = {bin_width*100:.0f}%) with mean signal per bin")
     ax1.grid(True, alpha=0.25)
-
     # Eje secundario (señales)
     ax2 = ax1.twinx()
-
     # Líneas por bin
     ax2.plot(
         bin_centers,
@@ -799,9 +775,8 @@ def plot_return_hist_with_signal_means(
         linestyle="-",
         linewidth=1.2,
         label="Average base_position_sigmoid per bin")
-
     # -----------------------
-    # NUEVO: líneas horizontales (medias globales)
+    # Líneas horizontales (medias globales)
     # -----------------------
     ax2.axhline(
         mean_exp_global,
@@ -818,10 +793,8 @@ def plot_return_hist_with_signal_means(
 
     ax2.set_ylabel("Mean signal / position")
     ax2.legend(loc="upper right")
-
     plt.tight_layout()
     plt.show()
-
     if show_table:
         out = stats.copy()
         out["bin"] = out["bin"].astype(str)
@@ -829,8 +802,6 @@ def plot_return_hist_with_signal_means(
         print(out.to_string(index=False))
 
     return stats
-
-
 
 # ============================================================
 # 8. Main
@@ -872,7 +843,7 @@ def main():
     print(f"alpha (intercepto): {alpha:.8f}")
     print(f"beta  (pendiente) : {beta:.8f}")
     print(f"R^2               : {r2:.4f}")
-
+    
     # Lag Pearson
     df_lags = analizar_lag_exp_sharpe(df_resultados, max_lag=20)
 
@@ -891,7 +862,6 @@ def main():
         "equity_buyhold": bh_equity,
         "equity_base": df_resultados["equity"],
     })
-
     # Heatmap mensual
     df_heat = df_resultados.copy()
     df_heat["year"] = df_heat.index.year
@@ -914,22 +884,17 @@ def main():
     # Señal sugerida (última fecha)
     last_dt = df_resultados.index[-1]
     row = df_resultados.iloc[-1]
-
     print("\n=== Señal sugerida por el modelo (última fecha disponible) ===")
     print(f"Fecha señal: {last_dt.date()}")
-
     print("\n--- Filtro 1: HMM + sigmoide ---")
     print(f"Sharpe esperado suavizado (exp_sharpe_shifted): {row['exp_sharpe_shifted']:.4f}")
     print(f"Base position (sigmoide): {row['base_position_sigmoid']:.4f}")
-
     print("\n--- Filtro 2: Tendencia ---")
     print(f"EMA fast > EMA slow (trend_flag): {int(row['trend_flag'])}")
     print(f"Trend adjust aplicado (usa shift): {row['trend_adjust']:.2f}")
-
     print("\n--- Filtro 3: Volatility targeting ---")
     print(f"Vol anual estimada (rolling): {row['rolling_vol_anual']:.4f}")
     print(f"Vol scalar aplicado: {row['vol_scalar']:.4f}")
-
     print("\n=== RESULTADO FINAL ===")
     print(f"Posición sugerida por el modelo: {row['position']:.4f}")
 
@@ -947,13 +912,6 @@ def main():
         clip_outliers=True,
         show_table=True
     )
-
-
-if __name__ == "__main__":
-    main()
-
-
-
 
 if __name__ == "__main__":
     main()
