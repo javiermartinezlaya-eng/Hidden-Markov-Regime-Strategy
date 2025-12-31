@@ -1,216 +1,134 @@
-\# HMM Regime + Trend + Vol Targeting Strategy
+Hidden Markov Regime Strategy
+============================
 
+Abstract
+--------
 
+This repository implements a quantitative trading research framework based on Hidden Markov Models (HMMs) for latent market regime identification. The objective is not to maximize absolute returns, but to evaluate whether regime-aware exposure control can improve drawdown behavior and risk-adjusted performance under strict out-of-sample and statistical validation.
 
-This repository implements a \*\*walk-forward Hidden Markov Model (HMM) regime strategy\*\*
+The project prioritizes methodological rigor, robustness, and defensible inference over backtest optimization.
 
-combined with:
 
-\- expected Sharpe–based positioning,
+Overview
+--------
 
-\- a medium-term trend filter,
+Financial markets exhibit time-varying statistical properties that can be described as latent regimes with distinct volatility, trend persistence, and return characteristics. This project develops a systematic approach to:
 
-\- volatility targeting,
+- Infer latent market regimes using probabilistic state-space models
+- Translate regime probabilities into trading exposure signals
+- Enforce walk-forward evaluation to prevent look-ahead bias
+- Quantify statistical significance while controlling for data-snooping effects
 
-\- and realistic execution constraints.
 
+Methodology
+-----------
 
+Regime Inference
+- Multivariate Gaussian Hidden Markov Model
+- Rolling (walk-forward) training to ensure temporal integrity
+- Daily regime probability estimation
+- Regime count fixed ex-ante
 
-The strategy is evaluated across multiple ETF pairs using \*\*GLD as the risk asset\*\*
+Signal Construction
+- Exposure derived from regime posterior probabilities
+- Trend and volatility filters applied
+- Volatility normalization to enable fair comparison with benchmarks
 
-and a set of equity ETFs as the alternative leg.
+Validation and Statistical Inference
+- Block bootstrap Monte Carlo simulations to preserve temporal dependence
+- Empirical distributions for Sharpe ratio, CAGR, and drawdowns
+- Deflated Sharpe Ratio applied to adjust for multiple testing and selection bias
 
 
+Project Structure
+-----------------
 
----
+    ├── reports/
+    │   └── figures/               Strategy outputs and diagnostics
+    ├── src/
+    │   ├── hmm_strategy.py        Core regime model and signal logic
+    │   ├── bootstrap.py           Block bootstrap inference
+    │   ├── deflated_sharpe.py     Statistical adjustment utilities
+    │   └── export_figures.py      Figure generation
+    ├── requirements.txt
+    ├── README.md
+    └── LICENSE
 
 
+Installation
+------------
 
-\## Strategy Overview
+Clone the repository and install dependencies:
 
+    git clone https://github.com/javiermartinezlaya-eng/Hidden-Markov-Regime-Strategy.git
+    cd Hidden-Markov-Regime-Strategy
+    pip install -r requirements.txt
 
+Use of a virtual environment or conda environment is recommended for reproducibility.
 
-At a high level, the strategy:
 
+Usage
+-----
 
+Run the regime-based strategy:
 
-1\. \*\*Downloads daily prices\*\* using `yfinance`
+    python src/hmm_strategy.py
 
-2\. \*\*Builds HMM regimes\*\* on:
+Run bootstrap inference:
 
-&nbsp;  - daily returns  
+    python src/bootstrap.py
 
-&nbsp;  - absolute returns (volatility proxy)
+Generate figures and reports:
 
-3\. \*\*Trains the HMM walk-forward\*\*, re-estimating parameters year by year  
+    python src/export_figures.py
 
-&nbsp;  (no look-ahead bias in regime parameters)
+Script parameters can be modified to adjust asset universe, rolling window length, feature selection, and regime count.
 
-4\. \*\*Forms expected Sharpe ratios\*\* using predictive regime probabilities
 
-5\. \*\*Maps expected Sharpe to exposure\*\* via a sigmoid function
+Results Interpretation
+----------------------
 
-6\. \*\*Applies a trend filter\*\* (EMA fast vs slow)
+- Raw returns are intentionally constrained due to volatility targeting
+- Volatility-matched performance is comparable to, and in some periods exceeds, Buy-and-Hold
+- Maximum drawdowns are materially reduced during high-volatility regimes
+- Statistical conclusions are based on distributional inference rather than point estimates
 
-7\. \*\*Targets constant volatility\*\*
+Results should be interpreted in the context of risk control and robustness, not return maximization.
 
-8\. \*\*Executes with realistic frictions\*\*:
 
-&nbsp;  - weekly rebalancing
+Limitations
+-----------
 
-&nbsp;  - dead-band (no-trade zone)
+- Transaction costs, slippage, and market impact are not modeled
+- Execution assumes daily close-to-close trading
+- Regime classification may become unstable during structural market breaks
+- Performance is sensitive to regime count and feature specification
 
-&nbsp;  - transaction costs proportional to turnover
 
+Reproducibility
+---------------
 
+- Walk-forward methodology enforces strict temporal ordering
+- Bootstrap inference preserves serial correlation
+- No parameter optimization is performed on test data
+- Results are reproducible given identical data inputs and random seeds
 
----
 
+Disclaimer
+----------
 
+This repository is provided solely for research and educational purposes.
+Nothing contained herein constitutes investment advice, financial advice, trading advice, or a recommendation to buy or sell any securities, futures, or other financial instruments.
 
-\## Benchmarking Methodology
+The author assumes no responsibility for any losses or damages resulting from the use of this code or any decisions made based on its outputs. Use at your own risk.
 
+Past performance is not indicative of future results.
 
 
-To avoid unfair comparisons, performance is measured against:
+License
+-------
 
-\- Buy \& Hold GLD
-
-\- Buy \& Hold of the paired ETF
-
-\- A \*\*static ex-ante benchmark mix\*\*:
-
-&nbsp; - calibrated only on the \*\*training window\*\*
-
-&nbsp; - matched to the \*\*strategy’s realized volatility in training\*\*
-
-&nbsp; - fixed weights applied out-of-sample
-
-
-
-This ensures that any alpha is not simply due to higher risk.
-
-
-
----
-
-
-
-\## Empirical Results (2010 → Present)
-
-
-
-\### Linear Alpha Regression (Daily, HAC / Newey-West)
-
-
-
-Annualized alpha estimates were obtained via regression of strategy returns on:
-
-\- GLD returns
-
-\- Paired ETF returns
-
-
-
-\#### Summary Across Pairs
-
-
-
-| Pair (GLD vs) | Annualized Alpha | Alpha (with costs) | t-stat | t-stat (with costs) | p-value | p-value (with costs) |
-
-|--------------|-----------------|--------------------|--------|---------------------|--------|----------------------|
-
-| SPY | 1.48% | 0.59% | 1.23 | 0.50 | 0.218 | 0.620 |
-
-| DIA | 1.55% | 0.66% | 1.32 | 0.56 | 0.186 | 0.573 |
-
-| QQQ | 1.07% | 0.21% | 0.85 | 0.17 | 0.397 | 0.868 |
-
-| IWM | 1.56% | 0.71% | 1.21 | 0.55 | 0.227 | 0.580 |
-
-| EFA | 1.39% | 0.50% | 1.22 | 0.44 | 0.223 | 0.658 |
-
-| EWJ | 1.08% | 0.19% | 0.89 | 0.16 | 0.375 | 0.874 |
-
-| EWG | 1.87% | 1.01% | 1.42 | 0.77 | 0.154 | 0.440 |
-
-| EWQ | 2.10% | 1.25% | 1.66 | 0.99 | 0.097 | 0.323 |
-
-| EWI | 1.78% | 0.96% | 1.35 | 0.73 | 0.176 | 0.465 |
-
-| EWP | 1.81% | 0.97% | 1.33 | 0.71 | 0.185 | 0.475 |
-
-| FEZ | 2.04% | 1.19% | 1.59 | 0.93 | 0.111 | 0.351 |
-
-| EWU | 1.23% | 0.35% | 1.09 | 0.31 | 0.274 | 0.755 |
-
-
-
----
-
-
-
-\## Interpretation
-
-
-
-\- \*\*Without transaction costs\*\*, the strategy:
-
-&nbsp; - generates \*\*positive alpha across all pairs\*\*
-
-&nbsp; - often outperforms the market on a risk-adjusted basis
-
-\- \*\*With realistic transaction costs included\*\*:
-
-&nbsp; - alpha is \*\*significantly reduced\*\*
-
-&nbsp; - statistical significance largely disappears
-
-\- This indicates that:
-
-&nbsp; - the signal \*\*contains information\*\*
-
-&nbsp; - but the edge is \*\*fragile to execution frictions\*\*
-
-
-
-In other words, the model \*\*beats the market in principle\*\*, but \*\*turnover and costs are the main limiting factor\*\*.
-
-
-
----
-
-
-
-\## Key Takeaways
-
-
-
-\- Regime-based expected Sharpe signals are \*\*directionally correct\*\*
-
-\- Trend + volatility targeting stabilizes risk effectively
-
-\- Transaction costs dominate performance in daily/weekly implementations
-
-\- Improving execution (lower turnover, slower signals, cheaper instruments)
-
-&nbsp; is likely more impactful than improving the model itself
-
-
-
----
-
-
-
-\## How to Run
-
-
-
-\### Install dependencies
-
-```bash
-
-pip install -r requirements.txt
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 
 
