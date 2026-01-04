@@ -48,7 +48,7 @@ TREND_MAX_WEIGHT = 1.0
 RISK_FREE_ANUAL = 0.03
 
 # ============================================================
-# BENCHMARK JUSTO (OPCIÓN 2): target_vol = vol de la estrategia en TRAIN (ex-ante)
+# BENCHMARK 
 # ============================================================
 BENCH_TRAIN_YEARS = 3  
 
@@ -482,7 +482,7 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
     w_risk_raw = position.clip(0.0, MAX_LEVERAGE)
 
     # ============================================================
-    # CAMBIO 1) REBALANCEO CADA N DÍAS 
+    # REBALANCEO CADA N DÍAS 
     # ============================================================
     REBALANCE_EVERY = 5  # 5 = semanal aprox, 21 = mensual aprox
     idx = np.arange(len(w_risk_raw))
@@ -528,7 +528,6 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
 
     # Returns NETOS (net)
     strat_returns = strat_returns_gross - cost
-
 
     # Métricas sobre NETO
     metricas, equity, drawdown = calcular_metricas(strat_returns, freq_anual=freq_anual)
@@ -614,8 +613,7 @@ def build_static_mix_ex_ante(ret_risk, ret_safe, strat_ret, freq_anual=252, trai
     mix = (w_r * ret_risk + w_s * ret_safe).fillna(0.0)
 
     return mix, w_r, w_s, vol_b, target_vol
-
-
+    
 # ============================================================
 # 7) Ejecutar una pareja (GLD vs otro) y dibujar su gráfica
 # ============================================================
@@ -652,7 +650,7 @@ def run_pair_and_plot(risk_ticker, other_ticker, start, end):
     strat_ret = df_resultados["strat_returns"].fillna(0.0)
     
     # ============================================================
-    # Megida de alpha (Regresión Lineal)
+    # Regresión Lineal Multivariante
     # ============================================================
 
     df_alpha = pd.DataFrame({
@@ -719,8 +717,9 @@ def run_pair_and_plot(risk_ticker, other_ticker, start, end):
     plt.close()
 
 # ============================================================
-# 8) MAIN: corre todas las parejas y saca N gráficas
+# 8) MAIN
 # ============================================================
+
 def main():
     print(f"Backtest multi-pairs: {RISK_TICKER} vs {len(PAIRS)} activos")
     print(f"Rango: {START_DATE} -> {END_DATE}")
