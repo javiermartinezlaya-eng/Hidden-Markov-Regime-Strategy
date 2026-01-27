@@ -245,7 +245,7 @@ def entrenar_hmm_probabilistico(observaciones, n_states=N_ESTADOS, max_iter=50,
 
 
 # ============================================================
-# 3bis) Filtrado + suavizado con parámetros fijos (test)
+# 3b) Filtrado + suavizado con parámetros fijos 
 # ============================================================
 def filtrar_y_suavizar_hmm_dado_parametros(observaciones, medias_full, covs, A, pi):
     obs = np.asarray(observaciones.values, dtype=float)
@@ -491,7 +491,6 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
 
     # ============================================================
     # CAMBIO 2) BANDA / ZONA MUERTA (evita microajustes)
-    # Nota: aplicada DESPUÉS del rebalanceo para reducir aún más turnover
     # ============================================================
     BAND = 0.05  # 5% de banda
     w_prev = w_risk_reb.shift(1).fillna(w_risk_reb.iloc[0])
@@ -504,19 +503,18 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
     w_safe = (1.0 - w_risk).clip(0.0, 1.0)
 
     # ============================================================
-    # EJECUCIÓN SIN LOOK-AHEAD:
-    # el peso usado en el retorno de t es el decidido en t-1
+    # EJECUCIÓN:
     # ============================================================
     w_risk_exec = w_risk.shift(1).fillna(w_risk.iloc[0])
     w_safe_exec = (1.0 - w_risk_exec).clip(0.0, 1.0)
 
     # ------------------------------------------------------------
-    # Returns BRUTOS (gross) con pesos ejecutables
+    # Returns BRUTOS con pesos ejecutables
     # ------------------------------------------------------------
     strat_returns_gross = w_risk_exec * ret_risk + w_safe_exec * ret_safe
 
     # ------------------------------------------------------------
-    # COSTES DE TRANSACCIÓN (turnover) sobre cambios de peso ejecutable
+    # COSTES DE TRANSACCIÓN sobre cambios de peso ejecutable
     # (cartera 2-activos => turnover = 2*|Δw_risk|)
     # ------------------------------------------------------------
     TC_BPS = 15
@@ -526,7 +524,7 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
     turnover = 2.0 * dw
     cost = tc * turnover
 
-    # Returns NETOS (net)
+    # Returns NETOS 
     strat_returns = strat_returns_gross - cost
 
     # Métricas sobre NETO
@@ -551,7 +549,7 @@ def estrategia_hmm_prob_regime_trend(precios, posterior_filt, medias_df, sigmas_
     return df_resultados, metricas
 
 # ============================================================
-# 6) Benchmark helper: encontrar pesos para un target vol
+# 6) Benchmark helper
 # ============================================================
 def find_static_weights_for_target_vol(ret_risk, ret_safe, target_vol, freq_anual=252):
     vol_r = ret_risk.std() * np.sqrt(freq_anual)
@@ -577,7 +575,7 @@ def find_static_weights_for_target_vol(ret_risk, ret_safe, target_vol, freq_anua
 
 
 # ============================================================
-# 6bis) Benchmark  
+# 6b) Benchmark  
 # ============================================================
 def build_static_mix_ex_ante(ret_risk, ret_safe, strat_ret, freq_anual=252, train_years=3):
     # Alinear índices
@@ -615,7 +613,7 @@ def build_static_mix_ex_ante(ret_risk, ret_safe, strat_ret, freq_anual=252, trai
     return mix, w_r, w_s, vol_b, target_vol
     
 # ============================================================
-# 7) Ejecutar una pareja (GLD vs otro) y dibujar su gráfica
+# 7) Ejecución y gráficas
 # ============================================================
 def run_pair_and_plot(risk_ticker, other_ticker, start, end):
     print(f"\n=====  {risk_ticker} & {other_ticker} =====")
@@ -675,7 +673,7 @@ def run_pair_and_plot(risk_ticker, other_ticker, start, end):
 
 
     # --------------------------------------------------------
-    # BENCHMARK JUSTO EX-ANTE 
+    # BENCHMARK EX-ANTE 
     # --------------------------------------------------------
     bh_mix, w_r, w_o, vol_b, target_vol = build_static_mix_ex_ante(
         ret_risk, ret_other, strat_ret,
