@@ -7,20 +7,8 @@ import time
 import statsmodels.api as sm
 
 RISK_TICKER = "GLD"  
-PAIRS = [
-    "SPY",  # USA S&P 500
-    "DIA",  # USA Dow
-    "QQQ",  # USA Nasdaq
-    "IWM",  # USA small caps
-    "EFA",  # MSCI EAFE (desarrollados ex-US)
-    "EWJ",  # Japón
-    "EWG",  # Alemania
-    "EWQ",  # Francia
-    "EWI",  # Italia
-    "EWP",  # España (IBEX aprox vía ETF de España)
-    "FEZ",  # EuroStoxx 50
-    "EWU",  # UK
-]
+PAIRS = [ "SPY",   "DIA",   "QQQ",  "IWM",   "EFA", "EWJ",   "EWG",  "EWQ", "EWI",   "EWP",  "FEZ",  "EWU", 
+        ]
 
 START_DATE = "2010-01-01"
 END_DATE = datetime.date.today().strftime("%Y-%m-%d")
