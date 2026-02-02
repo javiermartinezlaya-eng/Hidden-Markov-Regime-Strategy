@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import time
 import statsmodels.api as sm
 
-RISK_TICKER = "GLD"  
+HMM_TICKER = "GLD"  
 PAIRS = [ "SPY",   "DIA",   "QQQ",  "IWM",   "EFA", "EWJ",   "EWG",  "EWQ", "EWI",   "EWP",  "FEZ",  "EWU", 
         ]
 
@@ -603,13 +603,13 @@ def build_static_mix_ex_ante(ret_risk, ret_safe, strat_ret, freq_anual=252, trai
 # ============================================================
 # 7) Ejecución y gráficas
 # ============================================================
-def run_pair_and_plot(risk_ticker, other_ticker, start, end):
-    print(f"\n=====  {risk_ticker} & {other_ticker} =====")
+def run_pair_and_plot(hmm_ticker, other_ticker, start, end):
+    print(f"\n=====  {hmm_ticker} & {other_ticker} =====")
 
-    prices_risk = descargar_precios(risk_ticker, start, end)
+    prices_risk = descargar_precios(hmm_ticker, start, end)
     prices_other = descargar_precios(other_ticker, start, end)
 
-    sanity_check_close(prices_risk, risk_ticker)
+    sanity_check_close(prices_risk, hmm_ticker)
     sanity_check_close(prices_other, other_ticker)
 
     prices = prices_risk.copy()
@@ -686,14 +686,14 @@ def run_pair_and_plot(risk_ticker, other_ticker, start, end):
     # plot
     plt.figure(figsize=(12, 6))
     plt.plot(eq_strat.index, eq_strat.values, label="STRATEGY")
-    plt.plot(eq_risk.index, eq_risk.values, label=f"BH {risk_ticker}")
+    plt.plot(eq_risk.index, eq_risk.values, label=f"BH {hmm_ticker}")
     plt.plot(eq_other.index, eq_other.values, label=f"BH {other_ticker}")
     plt.plot(
         eq_mix.index, eq_mix.values,
-        label=f"BH MIX ex-ante (train {BENCH_TRAIN_YEARS}y, target vol=strat train, w{risk_ticker}={w_r:.2f})"
+        label=f"BH MIX ex-ante (train {BENCH_TRAIN_YEARS}y, target vol=strat train, w{hmm_ticker}={w_r:.2f})"
     )
 
-    plt.title(f"Equity curves: Strategy vs Buy&Hold ({risk_ticker} / {other_ticker} / Mix ex-ante)")
+    plt.title(f"Equity curves: Strategy vs Buy&Hold ({hmm_ticker} / {other_ticker} / Mix ex-ante)")
     plt.xlabel("Fecha")
     plt.ylabel("Equity (base = 1.0)")
     plt.grid(True)
@@ -707,7 +707,7 @@ def run_pair_and_plot(risk_ticker, other_ticker, start, end):
 # ============================================================
 
 def main():
-    print(f"Backtest multi-pairs: {RISK_TICKER} vs {len(PAIRS)} activos")
+    print(f"Backtest multi-pairs: {HMM_TICKER} vs {len(PAIRS)} activos")
     print(f"Rango: {START_DATE} -> {END_DATE}")
     print(f"Benchmark ex-ante: calibra con primeros {BENCH_TRAIN_YEARS} años (vol de estrategia en train).")
     print (f"Training HMM model")
@@ -716,9 +716,9 @@ def main():
         time.sleep(1)
     for other in PAIRS:
         try:
-            run_pair_and_plot(RISK_TICKER, other, START_DATE, END_DATE)
+            run_pair_and_plot(HMM_TICKER, other, START_DATE, END_DATE)
         except Exception as e:
-            print(f"ERROR en {RISK_TICKER} vs {other}: {e}")
+            print(f"ERROR en {HMM_TICKER} vs {other}: {e}")
 
 
 if __name__ == "__main__":
